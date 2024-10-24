@@ -20,14 +20,13 @@ export class GithubActionsAwsAuthCdkStack extends cdk.Stack {
     const iamRepoDeployAccess = props.repositoryConfig.map(r => `repo:${r.owner}/${r.repo}:${r.filter ?? '*'}`)
 
     const conditions: iam.Conditions = {
+      StringEquals: {
+        'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
+      },
       StringLike: {
-        [`${githubDomain}:sub`]: iamRepoDeployAccess,
-      },
-      ForAllValuesStringEquals: {
-        'token.actions.githubusercontent.com:iss': 'https://token.actions.githubusercontent.com',
-        'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
-      },
-    }
+        "token.actions.githubusercontent.com:sub": iamRepoDeployAccess
+      }
+    };
 
     const role = new iam.Role(this, 'gitHubDeployRole', {
       assumedBy: new iam.WebIdentityPrincipal(githubProvider.openIdConnectProviderArn, conditions),
